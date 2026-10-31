@@ -28,7 +28,15 @@ public record Impostazioni(int puntiPerVincere, int scartoMinimo, int velocitaPa
      * dice quale valore è sbagliato e perché.
      */
     public Impostazioni {
-        // scrivete qui
+        if (puntiPerVincere < 1 || puntiPerVincere > 99) {
+            throw new IllegalArgumentException("puntiPerVincere non valido: " + puntiPerVincere + " deve essere fra 1 e 99");
+        }
+        if (scartoMinimo < 1 || scartoMinimo > 10) {
+            throw new IllegalArgumentException("scartoMinimo non valido: " + scartoMinimo + " deve essere fra 1 e 10");
+        }
+        if (velocitaPalla < 1 || velocitaPalla > 20) {
+            throw new IllegalArgumentException("velocitaPalla non valido: " + velocitaPalla + " deve essere fra 1 e 20 (estremi compresi)");
+        }
     }
 
     /**
@@ -51,7 +59,92 @@ public record Impostazioni(int puntiPerVincere, int scartoMinimo, int velocitaPa
      * Se ci sono errori in più righe, il messaggio è quello della riga più in alto.
      */
     public static Impostazioni leggi(List<String> righe) {
-        return STANDARD; // scrivete qui
+        int puntiPerVincere = 11;
+        int scartoMinimo = 2;
+        int velocitaPalla = 5;
+        boolean vistoPunti = false;
+        boolean vistoScarto = false;
+        boolean vistoVelocita = false;
+ 
+        int n = 0; //numero della riga
+        for (String riga : righe) {
+            n++;
+            riga = riga.trim();
+ 
+            if (riga.isEmpty() || riga.startsWith("#")) {
+                continue;
+            }
+            //1. manca il segno '='
+            if (riga.indexOf('=') < 0) {
+                throw new IllegalArgumentException("riga " + n + ": manca il segno '='");
+            }
+ 
+            String chiave = riga.substring(0, riga.indexOf('=')).trim();
+            String valore = riga.substring(riga.indexOf('=') + 1).trim();
+            
+            //2.  la chiave non è una delle tre
+            if (!chiave.equals("puntiPerVincere") && !chiave.equals("scartoMinimo") && !chiave.equals("velocitaPalla")) {
+                throw new IllegalArgumentException("riga " + n + ": chiave sconosciuta '" + chiave + "'");
+            }
+ 
+            int numero;
+
+            //3. il valore non è un numero intero
+            try {
+                numero = Integer.parseInt(valore);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                    "riga " + n + ": il valore di " + chiave + " non è un numero intero ('" + valore + "')");
+            }
+
+            //4. la stessa chiave c'era già in una riga precedente
+            switch (chiave) {
+                case "puntiPerVincere":
+                    if (vistoPunti) {  //la chiave è gia comparsa?
+                        throw new IllegalArgumentException("riga " + n + ": chiave ripetuta 'puntiPerVincere'");
+                    }
+                    vistoPunti = true;
+                    break;
+                case "scartoMinimo":
+                    if (vistoScarto) {  //la chiave è gia comparsa?
+                        throw new IllegalArgumentException("riga " + n + ": chiave ripetuta 'scartoMinimo'");
+                    }
+                    vistoScarto = true;
+                    break;
+                default: // velocitaPalla
+                    if (vistoVelocita) {  //la chiave è gia comparsa?
+                        throw new IllegalArgumentException("riga " + n + ": chiave ripetuta 'velocitaPalla'");
+                    }
+                    vistoVelocita = true;
+                    break;
+            }
+
+            //5. il valore è fuori dal suo intervallo (gli intervalli del costruttore)
+            switch (chiave) {
+                case "puntiPerVincere":
+                    if (numero < 1 || numero > 99) {
+                        throw new IllegalArgumentException(
+                            "riga " + n + ": puntiPerVincere fuori intervallo (1-99): " + numero);
+                    }
+                    puntiPerVincere = numero;
+                    break;
+                case "scartoMinimo":
+                    if (numero < 1 || numero > 10) {
+                        throw new IllegalArgumentException(
+                            "riga " + n + ": scartoMinimo fuori intervallo (1-10): " + numero);
+                    }
+                    scartoMinimo = numero;
+                    break;
+                default: // velocitaPalla
+                    if (numero < 1 || numero > 20) {
+                        throw new IllegalArgumentException(
+                            "riga " + n + ": velocitaPalla fuori intervallo (1-20): " + numero);
+                    }
+                    velocitaPalla = numero;
+                    break;
+            }
+        }
+        return new Impostazioni(puntiPerVincere, scartoMinimo, velocitaPalla);
     }
 
     /**
